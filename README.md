@@ -131,4 +131,4 @@ Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
 
 Mac Dallas - [roylexstephane@gmail.com]
 
-Lien du Projet: [https://github.com/webMappingGabX/webMappingAPI.git](https://github.com/MacDallas123/blokusGameApi)
+Lien du Projet: [https://github.com/webMappingGabX/webMappingAPI.git](https://github.com/MacDallas123/webMappingAPI)
