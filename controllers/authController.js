@@ -1,18 +1,25 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/models');
+const { User, Workspace } = require('../models/models');
 
 
 exports.register = async (req, res) => {
   try {
-    const { id, username, email, type, password } = req.body;
+    const { id, name, email, type, password } = req.body;
 
-    const newUser = await User.create({ id, username, email, type, password });
+    const newUser = await User.create({ id, name, email, type, password });
     
+    const workspace = await Workspace.create({ 
+      name: "Espace de travail 1", 
+      description: "Espace de travail par défaut", 
+      owner: newUser.id });
+
+    workspace.addUser(newUser);
+
     res.status(201).json({
       message: "Utilisateur créé avec succès",
       user: {
         "id": newUser.id,
-        "username": newUser.username,
+        "name": newUser.name,
         "email": newUser.email,
         "type": newUser.type
       }
@@ -27,10 +34,9 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ where: { username } });
-    //console.log({ "user": user.password });
-    //console.log({ "valid pass": await user.validPassword(password) });
+    const { email, password } = req.body;
+    const user = await User.findOne({ where: { email } });
+
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
@@ -42,7 +48,7 @@ exports.login = async (req, res) => {
 
     // Génère un token JWT avec l'ID de l'utilisateur
     const token = jwt.sign(
-      { id: user.id, username: user.username }, // Payload du token
+      { id: user.id, email: user.email }, // Payload du token
       process.env.JWT_SECRET, // Clé secrète pour signer le token
       { expiresIn: '15d' } // Durée de validité du token
     );

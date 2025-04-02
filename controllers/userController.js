@@ -4,7 +4,7 @@ const { User } = require('../models/models');
 // get all users
 exports.all = async (req, res) => {
     try {
-        const users = await User.findAll({ order: [['username', 'ASC']] });
+        const users = await User.findAll({ order: [['name', 'ASC']] });
         res.status(200).json(users);
     } catch (err) {
         res.status(500).json({
@@ -32,10 +32,9 @@ exports.get = async (req, res) => {
 }
 
 exports.create = async (req, res) => {
-    const { username, email, type } = req.body;
+    const { name, email, type } = req.body;
     try {
-        //const userId = req.userData.userId;
-        const user = await User.create({ username, email, type });
+        const user = await User.create({ name, email, type });
         
         res.status(201).json({ message: "Utilisateur créé avec succès", "user": user });
     } catch(err) {
@@ -49,14 +48,14 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     
     const { id } = req.params;
-    const { username, email, type } = req.body;
+    const { name, email, type } = req.body;
 
     try {
         const user = await User.findOne({ where: { "id": id }});
         
         if(user != null)
         {
-            if(username != null) user.username = username;
+            if(name != null) user.name = name;
             if(email != null) user.email = email;
             if(type != null) user.type = type;
 

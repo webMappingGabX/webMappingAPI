@@ -4,11 +4,10 @@ const bcrypt = require("bcrypt");
 
 /** ---------- MODELS ---------- **/
 // User Model
-const User = sequelize.define("user", {
-    username: {
+const User = sequelize.define("User", {
+    name: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     },
     email: {
         type: DataTypes.STRING,
@@ -50,7 +49,7 @@ const User = sequelize.define("user", {
 });
 
 // GeoDatas Model
-const GeoJsonData = sequelize.define("geojsondata", {
+const GeoJsonData = sequelize.define("GeojsonData", {
     filename: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -72,7 +71,7 @@ const GeoJsonData = sequelize.define("geojsondata", {
 });
 
 // Workspace Model
-/*const Workspace = sequelize.define("workspace", {
+const Workspace = sequelize.define("Workspace", {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -88,15 +87,41 @@ const GeoJsonData = sequelize.define("geojsondata", {
     }
 }, {
     timestamps: true
-});*/
+});
 
-GeoJsonData.belongsTo(User, { foreignKey: { name: 'userId', allowNull: true } });
-User.hasMany(GeoJsonData, { foreignKey: { name: 'userId', allowNull: true } });
-/*Workspace.belongsTo(User, { foreignKey: 'owner' });
-User.hasMany(Workspace, { foreignKey: 'owner' });*/
+// Layer Model
+const Layer = sequelize.define("Layer", {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    description: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    owner: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    }
+}, {
+    timestamps: true
+});
 
-/*GeoJsonData.belongsTo(Workspace, { foreignKey: 'workspaceId' });
-Workspace.hasMany(GeoJsonData, { foreignKey: 'workspaceId' });*/
+/** ---------- RELATIONS ---------- **/
+Workspace.belongsTo(User, { foreignKey: 'owner' });
+User.hasMany(Workspace, { foreignKey: 'owner' });
+
+Layer.belongsTo(User, { foreignKey: 'owner' });
+User.hasMany(Layer, { foreignKey: 'owner' });
+
+Layer.belongsTo(Workspace, { foreignKey: 'workspaceId' });
+Workspace.hasMany(Layer, { foreignKey: 'workspaceId' });
+
+Layer.hasOne(GeoJsonData, { foreignKey: { name : "layerId", allowNull: true }, onDelete: 'CASCADE' });
+GeoJsonData.belongsTo(Layer, { foreignKey: { name : "layerId", allowNull: true } });
+
+User.belongsToMany(Workspace, { through: "UserWorkspaces" });
+Workspace.belongsToMany(User, { through: "UserWorkspaces" });
 
 /** ---------- OPERATIONS ---------- **/
 User.prototype.validPassword = async function(password) {
@@ -106,5 +131,7 @@ User.prototype.validPassword = async function(password) {
 module.exports = {
     User,
     GeoJsonData,
+    Workspace,
+    Layer,
     sequelize
 };

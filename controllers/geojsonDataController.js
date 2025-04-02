@@ -1,13 +1,19 @@
 const db = require('../db');
-const { GeoJsonData } = require('../models/models');
+const { GeoJsonData, Layer, User } = require('../models/models');
 const fs = require('fs');
 
 exports.all = async (req, res) => {
-    try {
-        const userId = req.userData.userId;
+    const { workspaceId } = req.query;
 
-        const geojsondatas = await GeoJsonData.findAll({ where: { "userId": userId }, order: [['createdAt', 'ASC']] });
-        res.status(200).json(geojsondatas);
+    try {
+        const layers = await Layer.findAll({ where: { "workspaceId": workspaceId }, order: [['createdAt', 'ASC']], include: GeoJsonData });
+
+        let geojsonDatas = [];
+        layers.forEach((layer) => {
+            geojsonDatas.push(layer.GeojsonDatum);
+        });
+
+        res.status(200).json(geojsonDatas);
     } catch (err) {
         res.status(500).json({
             message : err.message
@@ -19,7 +25,7 @@ exports.get = async (req, res) => {
     const {id} = req.params;
 
     try {
-        const geojsondata = await GeoJsonData.findOne({ where: {'id': id} });
+        const geojsondata = await GeoJsonData.findOne({ where: {'id': id}, include: Layer });
 
         if(geojsondata == null)
         {
@@ -50,25 +56,35 @@ exports.get = async (req, res) => {
 exports.upload = async (req, res) => {
     const userId = req.userData.userId;
     try {
-        const { editing } = req.body;
+        const { layerId, editing, name, description, workspaceId } = req.body;
         const { filename, path, mimetype } = req.file;
 
-        // Récupérer le fichier existant
-        const existingData = await GeoJsonData.findOne({ 
-            where: { 
-                userId // Sécurité : vérifier que l'utilisateur est propriétaire
-            } 
-        });
-
         // Sauvegarde dans la base de données
-        if (!existingData) {
-            const file = await GeoJsonData.create({ filename, path, mimetype, userId, editing });
-    
+        if (!layerId) {
+            const layer = await Layer.create({ name, description, "owner": userId, workspaceId });
+            
+            const file = await GeoJsonData.create({ filename, path, mimetype, editing });
+            file.setLayer(layer);
+
             res.json({ message: "Fichier uploadé avec succès", file });
         } else {
+            const layer = await Layer.findOne({ where: { id: layerId } });
+            const existingData = await layer.getGeojsonDatum();
+
+            if (!existingData) {
+                return res.status(404).json({ message: "Données GeoJSON non trouvées" });
+            }
             // Si un fichier existe déjà, le remplacer 
             fs.unlinkSync(existingData.path);
-            existingData.update({ filename, path, mimetype, userId, editing });
+            //existingData.update({ filename, path, mimetype, editing });
+
+            if(filename != null) existingData.filename = filename;
+            if(path != null) existingData.path = path;
+            if(mimetype != null) existingData.mimetype = mimetype;
+            if(editing != null) existingData.editing = editing;
+
+            existingData.save();
+
             res.json({ message: "Fichier remplacé avec succès", file: existingData });
         }
         
@@ -77,6 +93,7 @@ exports.upload = async (req, res) => {
       }
 }
 
+/*
 exports.update = async (req, res) => {
     const { id } = req.params;
     const { geojsonData } = req.body;
@@ -116,6 +133,7 @@ exports.update = async (req, res) => {
         });
     }
 };
+*/
 
 exports.delete = async (req, res) => {
 
