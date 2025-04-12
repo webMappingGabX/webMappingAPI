@@ -58,7 +58,13 @@ exports.upload = async (req, res) => {
     try {
         const { layerId, editing, name, description, workspaceId } = req.body;
         const { filename, path, mimetype } = req.file;
+        // Vérifier si le dossier d'upload existe, sinon le créer
 
+        const uploadDir = './uploads';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
         // Sauvegarde dans la base de données
         if (!layerId) {
             const layer = await Layer.create({ name, description, "owner": userId, workspaceId });
