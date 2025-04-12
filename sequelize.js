@@ -11,9 +11,9 @@ const sslOptions = process.env.DB_SSL === 'true' ? {
     ssl: {
         require: true,
         rejectUnauthorized: false,
-        ca: fs.readFileSync(process.env.DB_SSL_CA || '').toString(),
-        key: fs.readFileSync(process.env.DB_SSL_KEY || '').toString(),
-        cert: fs.readFileSync(process.env.DB_SSL_CERT || '').toString()
+        // ca: fs.readFileSync(process.env.DB_SSL_CA || '').toString(),
+        // key: fs.readFileSync(process.env.DB_SSL_KEY || '').toString(),
+        // cert: fs.readFileSync(process.env.DB_SSL_CERT || '').toString()
     }
 } : {};
 
