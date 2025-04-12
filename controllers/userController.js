@@ -14,7 +14,7 @@ exports.all = async (req, res) => {
 }
 
 exports.get = async (req, res) => {
-    const { code } = req.params;
+    const { id } = req.params;
 
     try {
         const user = await User.findOne({ where: { 'id': id } });

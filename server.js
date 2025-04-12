@@ -26,7 +26,7 @@ const dbname = process.env.DB_NAME;// || "gabx";
 
   // Synchroniser les modèles avec la base de données
   //sequelize.sync({ force: true })
-  sequelize.sync({ alter: true })
+  sequelize.sync({ alter: false })
   .then(async () => {
     console.log("Les tables ont été synchronisées");
   })

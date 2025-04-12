@@ -7,7 +7,40 @@ exports.all = async (req, res) => {
 
         const user = await User.findByPk(userId, { include: Workspace });
         res.status(200).json(user.Workspaces);
+        console.log("WORKSPACES", user.Workspaces);
         //res.status(200).json({ "workspaces": user.Workspaces });
+    } catch (err) {
+        res.status(500).json({
+            message : err.message
+        });
+    }
+}
+
+exports.workspaceUsers = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        /* const workspace = await Workspace.findByPk(id, {
+            include: [{
+                model: User,
+                as: "owner",
+            }, {
+                model: User,
+                through: { attributes: [] }
+            }] 
+        });
+        if (!workspace) return res.status(404).json({ message: "Workspace not found" });
+
+        const users = await workspace.getUsers(); */
+
+        const workspace = await Workspace.findByPk(id);
+        const users = await workspace.getUsers({
+            attributes: { exclude: [ 'password', 'type', 'createdAt', 'updatedAt', 'UserWorkspaces' ] }
+        });
+
+        if (!workspace) return res.status(404).json({ message: "Workspace not found" });
+        console.log(users);
+        res.status(200).json(users);
     } catch (err) {
         res.status(500).json({
             message : err.message
@@ -56,18 +89,26 @@ exports.addUser = async (req, res) => {
     try {
         const workspace = await Workspace.findByPk(id);
         
-        const user = await User.findOne({ where: email });
+        //const user = await User.findOne({ where: email });
+        const user = await User.findOne({ where: { email } });
         
-        if(workspace == null) return res.status(404).json("Cet espace de travail n'existe pas");
-        if(user == null) return res.status(404).json("Utilisateur introuvable");
+        if(workspace == null) return res.status(404).json({ message : "Cet espace de travail n'exists pas" });
+        if(user == null) return res.status(404).json({ message : "Aucun utilisateur n'est associé à cet email" });
 
-        const existingUser = await workspace.getUsers().some(user => user.email === email);
+        let usersInWorkspace = await workspace.getUsers();
+
+        let existingUser = usersInWorkspace.some(user => user.email === email);
+
+        if (workspace.owner !== req.userData.userId) {
+            return res.status(403).json({ message: "Vous n'êtes pas le propriétaire pour faire cela" });
+        }
 
         if(!existingUser)
+        {
             workspace.addUser(user);
+            return res.status(201).json({ message: "Utilisateur ajouté avec succès", workspace, user });
+        }
         else return res.status(400).json({ message : "Cet utilisateur appartient déjà au workspace" });
-        
-        res.status(201).json({ message: "Espace de travail créé avec succès", workspace });
     } catch(err) {
         res.status(500).json({
             message : err.message
@@ -82,14 +123,16 @@ exports.removeUser = async (req, res) => {
     try {
         const workspace = await Workspace.findByPk(id);
         
-        const user = await User.findOne({ where: email });
+        const user = await User.findOne({ where: { email } });
         
-        if(workspace == null) return res.status(404).json("Cet espace de travail n'existe pas");
-        if(user == null) return res.status(404).json("Utilisateur introuvable");
-
+        if(workspace == null) return res.status(404).json({ message : "Cet espace de travail n'exists pas" });
+        if(user == null) return res.status(404).json({ message : "Aucun utilisateur n'est associé à cet email" });
+        if (user.id == workspace.owner) return res.status(400).json({ message : "Vous ne pouvez pas supprimer le propriétaire de l'espace de travail" });
+        if (workspace.owner !== req.userData.userId)  return res.status(403).json({ message: "Vous n'êtes pas le propriétaire pour faire cela" });
+        
         workspace.removeUser(user);
         
-        res.status(201).json({ message: "Espace de travail créé avec succès", workspace });
+        res.status(201).json({ message: "Utilisateur retiré avec succès", workspace });
     } catch(err) {
         res.status(500).json({
             message : err.message

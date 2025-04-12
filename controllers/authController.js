@@ -4,28 +4,31 @@ const { User, Workspace } = require('../models/models');
 
 exports.register = async (req, res) => {
   try {
-    const { id, name, email, type, password } = req.body;
+    const { name, email, type, password } = req.body;
 
-    const newUser = await User.create({ id, name, email, type, password });
+    const newUser = await User.create({ name, email, type, password });
     
     const workspace = await Workspace.create({ 
-      name: "Espace de travail 1", 
+      name: `Espace de travail de ${newUser.name}`, 
       description: "Espace de travail par défaut", 
       owner: newUser.id });
-
+    
     workspace.addUser(newUser);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Utilisateur créé avec succès",
       user: {
         "id": newUser.id,
         "name": newUser.name,
         "email": newUser.email,
-        "type": newUser.type
+        "type": newUser.type,
+      },
+      workspace: {
+        "id": workspace.id
       }
     });
   } catch (err) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "Impossible de créé l'utilisateur",
       error: err
     });
@@ -53,6 +56,7 @@ exports.login = async (req, res) => {
       { expiresIn: '15d' } // Durée de validité du token
     );
 
+    
     res.cookie("token", token, {
       maxAge: 15 * 24 * 3600,
       httpOnly: true,
