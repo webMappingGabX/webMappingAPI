@@ -1,4 +1,5 @@
 const db = require('../db');
+const { uploadFile } = require('../googleDriveService');
 const { GeoJsonData, Layer, User } = require('../models/models');
 const fs = require('fs');
 
@@ -68,9 +69,16 @@ exports.upload = async (req, res) => {
         
         // Sauvegarde dans la base de données
         if (!layerId) {
+
+            const fileD = await uploadFile(filename, path);
+            if(!fileD) return res.json({ message: "No file uploaded to drive", fileD });
+
+            console.log("FILE D", fileD);
+
             const layer = await Layer.create({ name, description, "owner": userId, workspaceId });
             
-            const file = await GeoJsonData.create({ filename, path, mimetype, editing });
+            //const file = await GeoJsonData.create({ filename, path, mimetype, editing });
+            const file = await GeoJsonData.create({ "filename": fileD.data.id , path, mimetype, editing });
             file.setLayer(layer);
 
             res.json({ message: "Fichier uploadé avec succès", file });
