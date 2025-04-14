@@ -53,7 +53,54 @@ exports.get = async (req, res) => {
       }
 }*/
 
+
 exports.upload = async (req, res) => {
+    const userId = req.userData.userId;
+    try {
+        const { layerId, editing, name, description, workspaceId } = req.body;
+        const { filename, path, mimetype } = req.file;
+        // Vérifier si le dossier d'upload existe, sinon le créer
+
+        /*const uploadDir = './uploads';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }*/
+        
+        // Sauvegarde dans la base de données
+        if (!layerId) {
+            const layer = await Layer.create({ name, description, "owner": userId, workspaceId });
+            
+            const file = await GeoJsonData.create({ filename, path, mimetype, editing });
+            file.setLayer(layer);
+
+            res.json({ message: "Fichier uploadé avec succès", file });
+        } else {
+            const layer = await Layer.findOne({ where: { id: layerId } });
+            const existingData = await layer.getGeojsonDatum();
+
+            if (!existingData) {
+                return res.status(404).json({ message: "Données GeoJSON non trouvées" });
+            }
+            // Si un fichier existe déjà, le remplacer 
+            fs.unlinkSync(existingData.path);
+            //existingData.update({ filename, path, mimetype, editing });
+
+            if(filename != null) existingData.filename = filename;
+            if(path != null) existingData.path = path;
+            if(mimetype != null) existingData.mimetype = mimetype;
+            if(editing != null) existingData.editing = editing;
+
+            existingData.save();
+
+            res.json({ message: "Fichier remplacé avec succès", file: existingData });
+        }
+        
+      } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'upload : " + error + "; userId : " + userId });
+      }
+}
+
+/*exports.upload = async (req, res) => {
     const userId = req.userData.userId;
     try {
         const { layerId, editing, name, description, workspaceId } = req.body;
@@ -97,7 +144,7 @@ exports.upload = async (req, res) => {
       } catch (error) {
         res.status(500).json({ error: "Erreur lors de l'upload : " + error + "; userId : " + userId });
       }
-}
+}*/
 
 /*
 exports.update = async (req, res) => {

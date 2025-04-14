@@ -7,7 +7,7 @@ exports.all = async (req, res) => {
 
         const user = await User.findByPk(userId, { include: Workspace });
         res.status(200).json(user.Workspaces);
-        console.log("WORKSPACES", user.Workspaces);
+        //console.log("WORKSPACES", user.Workspaces);
         //res.status(200).json({ "workspaces": user.Workspaces });
     } catch (err) {
         res.status(500).json({
@@ -39,7 +39,7 @@ exports.workspaceUsers = async (req, res) => {
         });
 
         if (!workspace) return res.status(404).json({ message: "Workspace not found" });
-        console.log(users);
+        //console.log(users);
         res.status(200).json(users);
     } catch (err) {
         res.status(500).json({

@@ -9,6 +9,8 @@ const sequelize = require("./sequelize");
 const path = require("path");
 const cors = require("cors");
 
+const { upload, getDriveFile } = require("./googleDriveService");
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -23,6 +25,8 @@ app.use(cors({
 const dbname = process.env.DB_NAME;// || "gabx";
 (async function(){
   await db.createDb(dbname);
+  //upload();
+  //getDriveFile();
 
   // Synchroniser les modèles avec la base de données
   //sequelize.sync({ force: true })

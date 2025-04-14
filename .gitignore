@@ -3,3 +3,5 @@ resources/tiles/
 uploads/
 resources/geojson/parcelles.geojson
 .env
+test.geojson
+config/apiKeys.json

@@ -9,6 +9,7 @@ const router = express.Router();
 router.get('/', authMiddleware, geojsonDataController.all);
 router.get(':id', authMiddleware, geojsonDataController.get);
 router.post('/upload', authMiddleware, upload.single("file"), geojsonDataController.upload);
+//router.post('/upload', authMiddleware, geojsonDataController.upload);
 //router.put(':id', authMiddleware, geojsonDataController.update);
 router.delete(':id', authMiddleware, geojsonDataController.delete);
 
