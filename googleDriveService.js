@@ -1,16 +1,18 @@
 const fs = require('fs');
 const { google } = require("googleapis");
 
-const apiKeys = require("./config/apiKeys.json");
-//const apiKeys = require(process.env.GOOGLE_API_KEYS_LINK);
+//const apiKeys = require("./config/apiKeys.json");
+
+const googleApiClientEmail = process.env.GOOGLE_API_CLIENT_EMAIL;
+const googleApiPrivateKey = process.env.GOOGLE_API_PRIVATE_KEY;
 
 const SCOPE = ["https://www.googleapis.com/auth/drive"];
 
 async function authorize() {
     const jwtClient = new google.auth.JWT(
-        apiKeys.client_email,
+        googleApiClientEmail, //apiKeys.client_email,
         null,
-        apiKeys.private_key,
+        googleApiPrivateKey, //apiKeys.private_key,
         SCOPE
     );
 
