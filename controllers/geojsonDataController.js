@@ -1,5 +1,5 @@
 const db = require('../db');
-const { uploadFile } = require('../googleDriveService');
+const { uploadFile, getDriveFile, deleteDriveFile } = require('../googleDriveService');
 const { GeoJsonData, Layer, User } = require('../models/models');
 const fs = require('fs');
 
@@ -59,7 +59,7 @@ exports.upload = async (req, res) => {
     const userId = req.userData.userId;
     try {
         const { layerId, editing, name, description, workspaceId } = req.body;
-        const { filename, path, mimetype } = req.file;
+        const { filename, path, mimetype, buffer, originalname } = req.file;
         // Vérifier si le dossier d'upload existe, sinon le créer
 
         /*const uploadDir = './uploads';
@@ -70,15 +70,16 @@ exports.upload = async (req, res) => {
         // Sauvegarde dans la base de données
         if (!layerId) {
 
-            const fileD = await uploadFile(filename, path);
+            const finalName = Date.now() + "_" + originalname;
+            const fileD = await uploadFile(finalName, buffer);
             if(!fileD) return res.json({ message: "No file uploaded to drive", fileD });
 
-            console.log("FILE D", fileD);
+            //console.log("FILE D", fileD);
 
             const layer = await Layer.create({ name, description, "owner": userId, workspaceId });
             
             //const file = await GeoJsonData.create({ filename, path, mimetype, editing });
-            const file = await GeoJsonData.create({ "filename": fileD.data.id , path, mimetype, editing });
+            const file = await GeoJsonData.create({ "filename": fileD.data.id , "path": fileD.data.webLinkView, mimetype, editing });
             file.setLayer(layer);
 
             res.json({ message: "Fichier uploadé avec succès", file });
@@ -89,17 +90,28 @@ exports.upload = async (req, res) => {
             if (!existingData) {
                 return res.status(404).json({ message: "Données GeoJSON non trouvées" });
             }
-            // Si un fichier existe déjà, le remplacer 
-            fs.unlinkSync(existingData.path);
-            //existingData.update({ filename, path, mimetype, editing });
+            // console.log("EXISTING DATA BEFORE", existingData);
 
-            if(filename != null) existingData.filename = filename;
-            if(path != null) existingData.path = path;
+            // Si un fichier existe déjà, le remplacer 
+            //fs.unlinkSync(existingData.path);
+
+            // On supprime le fichier existant
+            await deleteDriveFile(existingData.filename);
+
+            // On envoi le nouveau fichier
+            const finalName = Date.now() + "_" + originalname;
+            const fileD = await uploadFile(finalName, buffer);
+            if(!fileD) return res.json({ message: "No file uploaded to drive", fileD });
+
+            existingData.filename = fileD.data.id;
+            existingData.path = fileD.data.webLinkView;
             if(mimetype != null) existingData.mimetype = mimetype;
             if(editing != null) existingData.editing = editing;
 
             existingData.save();
 
+            // console.log("EXISTING DATA AFTER", existingData);
+            // console.log("FILED", fileD);
             res.json({ message: "Fichier remplacé avec succès", file: existingData });
         }
         

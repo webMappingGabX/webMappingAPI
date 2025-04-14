@@ -19,7 +19,7 @@ async function authorize() {
     return jwtClient;
 }
 
-async function uploadFile(authClient, filename, path) {
+async function uploadFile(authClient, filename, buffer) {
     return new Promise((resolve, rejected) => {
         const drive = google.drive({version: "v3", auth: authClient});
 
@@ -31,10 +31,10 @@ async function uploadFile(authClient, filename, path) {
         drive.files.create({
             resource: fileMetaData,
             media: {
-                body: fs.createReadStream(path),
+                body: require('stream').Readable.from(buffer),
                 mimeType: "application/json"
             },
-            fields: 'id'
+            fields: 'id,name,webViewLink'
         }, (err, file) => {
             if(err) return rejected(err);
 
@@ -45,7 +45,15 @@ async function uploadFile(authClient, filename, path) {
 }
 
 async function getFile(authClient, fileId) {
-    return new Promise((resolve, reject) => {
+    const drive = google.drive({ version: "v3", auth: authClient });
+
+    const response = drive.files.get({
+        fileId: fileId,
+        alt: 'media'
+      });
+      return response;
+
+    /*return new Promise((resolve, reject) => {
         const drive = google.drive({ version: "v3", auth: authClient });
 
         drive.files.get(
@@ -61,42 +69,30 @@ async function getFile(authClient, fileId) {
                 const dest = fs.createWriteStream(filePath);
 
                 res.data
-                    .on("end", () => resolve(filePath))
+                    .on("end", () => resolve(res))
                     .on("error", (err) => reject(err))
                     .pipe(dest);
             }
         );
-    });
+    });*/
 }
 
-async function updateFile(authClient, fileId, newFilePath) {
-    return new Promise((resolve, reject) => {
-        const drive = google.drive({ version: "v3", auth: authClient });
+/*async function replaceFile(authClient, fileId, newFilePath) {
+    try {
+        // Delete the existing file
+        await deleteFile(authClient, fileId);
 
-        const fileMetadata = {
-            name: "updatedFileName",
-        };
+        // Upload the new file
+        const newFileName = newFilePath.split('/').pop();
+        const buffer = fs.readFileSync(newFilePath);
+        const newFile = await uploadFile(authClient, newFileName, buffer);
 
-        const media = {
-            mimeType: "application/json",
-            body: fs.createReadStream(newFilePath),
-        };
-
-        drive.files.update(
-            {
-                fileId: fileId,
-                resource: fileMetadata,
-                media: media,
-                fields: "id",
-            },
-            (err, file) => {
-                if (err) return reject(err);
-
-                resolve(file);
-            }
-        );
-    });
-}
+        return newFile;
+    } catch (err) {
+        console.error("Error replacing file:", err);
+        throw err;
+    }
+}*/
 
 async function deleteFile(authClient, fileId) {
     return new Promise((resolve, reject) => {
@@ -110,13 +106,11 @@ async function deleteFile(authClient, fileId) {
     });
 }
 
-exports.uploadFile = async (filename, path) => {
+exports.uploadFile = async (filename, buffer) => {
     try
     {
         const authClient = await authorize();
-        const file = await uploadFile(authClient, filename, path);
-
-        console.log("UPLOADED FILE", file);
+        const file = await uploadFile(authClient, filename, buffer);
 
         return file;
     } catch (err) {
@@ -124,17 +118,20 @@ exports.uploadFile = async (filename, path) => {
     }
 }
 
-exports.getDriveFile = () => {
-    authorize().then((authClient) => {
-        getFile(authClient, "14MO3ZdnZJkEjvsrAPBfnZw-P5yt-JAwx").then((filepath) => {
-            console.log("FILE PATH", filepath);
-        });
+exports.getDriveFile = async (fileId) => {
 
+    try
+    {
+        const authClient = await authorize();
+        const file = await getFile(authClient, fileId);
 
-    }).catch((err) => console.log("\n ERROR READING FILE", err));
+        return file;
+    } catch (err) {
+        console.log("\n ERROR UPLOADING FILE", err);
+    }
 }
 
-exports.updateDriveFile = async (fileId, updatedFilename) => {
+/*exports.updateDriveFile = async (fileId, updatedFilename) => {
     try
     {
         const authClient = await authorize();
@@ -146,7 +143,7 @@ exports.updateDriveFile = async (fileId, updatedFilename) => {
     } catch (err) {
         console.log("\n ERROR UPDATING FILE", err);
     }   
-};
+};*/
 
 exports.deleteDriveFile = async (fileId) => {
 
@@ -155,10 +152,10 @@ exports.deleteDriveFile = async (fileId) => {
         const authClient = await authorize();
         const file = await deleteFile(authClient, fileId);
 
-        console.log("DELETED FILE", file);
-
         return file;
     } catch (err) {
         console.log("\n ERROR DELETING FILE", err);
     }
 };
+
+// https://drive.google.com/file/d/1RfLnPrPAwiSS_fTLyFBCJXlJsfQPsxMh/view?usp=drive_link

@@ -1,4 +1,5 @@
 const db = require('../db');
+const { deleteDriveFile } = require('../googleDriveService');
 const { Layer, User, Workspace, GeoJsonData } = require('../models/models');
 const fs = require('fs');
 
@@ -57,7 +58,7 @@ exports.delete = async (req, res) => {
             return res.status(404).json({ message: "Donnée inexistante" });
         }
 
-        fs.unlinkSync(geojsondata.path);
+        await deleteDriveFile(geojsondata.filename);
 
         layer.destroy().then(() => {
             console.log("Couche supprimée avec succès");

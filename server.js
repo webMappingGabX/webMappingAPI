@@ -4,6 +4,7 @@ const userRoutes = require("./routes/user");
 const geodatasRoutes = require("./routes/geojson");
 const workspaceRoutes = require("./routes/workspace");
 const layerRoutes = require("./routes/layer");
+const fileRoutes = require("./routes/file");
 const db = require("./db");
 const sequelize = require("./sequelize");
 const path = require("path");
@@ -26,7 +27,7 @@ const dbname = process.env.DB_NAME;// || "gabx";
 (async function(){
   await db.createDb(dbname);
   //upload();
-  //getDriveFile();
+  //getDriveFile("1RfLnPrPAwiSS_fTLyFBCJXlJsfQPsxMh");
 
   // Synchroniser les modèles avec la base de données
   //sequelize.sync({ force: true })
@@ -47,6 +48,8 @@ const dbname = process.env.DB_NAME;// || "gabx";
   app.use(`${routeHead}/geodatas`, geodatasRoutes);
   app.use(`${routeHead}/workspaces`, workspaceRoutes);
   app.use(`${routeHead}/layers`, layerRoutes);
+
+  app.use(`${routeHead}/files`, fileRoutes);
 
   // share resources via any route
   app.use(`${routeHead}/static`, express.static(path.join(__dirname, "resources/geojson")));

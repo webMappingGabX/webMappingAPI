@@ -38,8 +38,10 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } , include: Workspace });
 
+    const workspaces = await user.getWorkspaces();
+    
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
@@ -63,8 +65,8 @@ exports.login = async (req, res) => {
       secure: true,
       sameSite: 'Strict'
     });
-
-    res.status(200).json({ message: 'Connexion réussie', user, token });
+    const workspaceIdx = workspaces.length > 0 ? workspaces[0].id : null;
+    res.status(200).json({ message: 'Connexion réussie', user, token, workspaceIdx });
   } catch (err) {
     res.status(400).json({ message: "Une erreur s'est produite pendant la connexion", error: err.message });
   }
