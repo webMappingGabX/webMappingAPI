@@ -31,8 +31,8 @@ const dbname = process.env.DB_NAME;// || "gabx";
   //getDriveFile("1RfLnPrPAwiSS_fTLyFBCJXlJsfQPsxMh");
 
   // Synchroniser les modèles avec la base de données
-  sequelize.sync({ force: true })
-  //sequelize.sync({ alter: false })
+  //sequelize.sync({ force: true })
+  sequelize.sync({ alter: false })
   .then(async () => {
     console.log("Les tables ont été synchronisées");
 
