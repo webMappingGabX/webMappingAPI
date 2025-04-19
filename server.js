@@ -11,6 +11,7 @@ const path = require("path");
 const cors = require("cors");
 
 const { upload, getDriveFile } = require("./googleDriveService");
+const createPublicWorkspace = require('./db/init');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -30,13 +31,15 @@ const dbname = process.env.DB_NAME;// || "gabx";
   //getDriveFile("1RfLnPrPAwiSS_fTLyFBCJXlJsfQPsxMh");
 
   // Synchroniser les modèles avec la base de données
-  //sequelize.sync({ force: true })
-  sequelize.sync({ alter: false })
+  sequelize.sync({ force: true })
+  //sequelize.sync({ alter: false })
   .then(async () => {
     console.log("Les tables ont été synchronisées");
+
+    await createPublicWorkspace();
   })
   .catch((err) => console.log("Erreur : " + err));
-  
+
   // Start of any route
   let routeHead = "/api/v1";
 

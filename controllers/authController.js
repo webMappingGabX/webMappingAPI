@@ -8,12 +8,18 @@ exports.register = async (req, res) => {
 
     const newUser = await User.create({ name, email, type, password });
     
+    // Add User to public workspace
+    const publicWorkspace = await Workspace.findOne({ where : { owner: null }});
+    if(publicWorkspace != null) publicWorkspace.addUser(newUser);
+
+    // Create user private Workspace
     const workspace = await Workspace.create({ 
       name: `Espace de travail de ${newUser.name}`, 
       description: "Espace de travail par défaut", 
       owner: newUser.id });
     
     workspace.addUser(newUser);
+
 
     return res.status(201).json({
       message: "Utilisateur créé avec succès",
@@ -40,7 +46,9 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } , include: Workspace });
 
-    const workspaces = await user.getWorkspaces();
+    //const workspaces = await user.getWorkspaces();
+
+    const workspace = await Workspace.findOne({ where: { owner: null }});
     
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
@@ -65,7 +73,11 @@ exports.login = async (req, res) => {
       secure: true,
       sameSite: 'Strict'
     });
-    const workspaceIdx = workspaces.length > 0 ? workspaces[0].id : null;
+
+    const workspaceIdx = workspace ? workspace.id : 1; //workspaces.length > 0 ? workspaces[0].id : null;
+
+    // console.log("WORKSPACES", workspaces);
+
     res.status(200).json({ message: 'Connexion réussie', user, token, workspaceIdx });
   } catch (err) {
     res.status(400).json({ message: "Une erreur s'est produite pendant la connexion", error: err.message });

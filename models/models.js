@@ -83,7 +83,11 @@ const Workspace = sequelize.define("Workspace", {
     },
     owner: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true
+    },
+    public: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 }, {
     timestamps: true
@@ -108,8 +112,8 @@ const Layer = sequelize.define("Layer", {
 });
 
 /** ---------- RELATIONS ---------- **/
-Workspace.belongsTo(User, { foreignKey: 'owner' });
-User.hasMany(Workspace, { foreignKey: 'owner' });
+Workspace.belongsTo(User, { foreignKey: 'owner', allowNull: true });
+User.hasMany(Workspace, { foreignKey: 'owner', allowNull: true });
 
 Layer.belongsTo(User, { foreignKey: 'owner' });
 User.hasMany(Layer, { foreignKey: 'owner' });
