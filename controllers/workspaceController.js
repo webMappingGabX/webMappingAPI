@@ -40,6 +40,11 @@ exports.workspaceUsers = async (req, res) => {
 
         if (!workspace) return res.status(404).json({ message: "Workspace not found" });
         //console.log(users);
+        
+        if (workspace.owner !== req.userData.userId) {
+            return res.status(403).json({ message: "Vous n'êtes pas le propriétaire pour voir les utilisateurs" });
+        }
+
         res.status(200).json(users);
     } catch (err) {
         res.status(500).json({

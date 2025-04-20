@@ -82,7 +82,7 @@ exports.upload = async (req, res) => {
             const file = await GeoJsonData.create({ "filename": fileD.data.id , "path": fileD.data.webLinkView, mimetype, editing });
             file.setLayer(layer);
 
-            res.json({ message: "Fichier uploadé avec succès", file });
+            res.json({ message: "Fichier uploadé avec succès", file, "layerId": layer.id });
         } else {
             const layer = await Layer.findOne({ where: { id: layerId } });
             const existingData = await layer.getGeojsonDatum();
@@ -112,7 +112,7 @@ exports.upload = async (req, res) => {
 
             // console.log("EXISTING DATA AFTER", existingData);
             // console.log("FILED", fileD);
-            res.json({ message: "Fichier remplacé avec succès", file: existingData });
+            res.json({ message: "Fichier remplacé avec succès", file: existingData, layerId: layer.id });
         }
         
       } catch (error) {
